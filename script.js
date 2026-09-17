@@ -1,4 +1,4 @@
-document.getElementById("careerForm").addEventListener("submit", function(event) {
+document.getElementById("careerForm").addEventListener("submit", async function(event) {
 
     event.preventDefault();
 
@@ -9,44 +9,60 @@ document.getElementById("careerForm").addEventListener("submit", function(event)
     let interest = document.getElementById("interest").value;
     let experience = document.getElementById("experience").value;
 
-    let career = "";
+    try {
 
-    if (interest === "Artificial Intelligence") {
-        career = "AI/ML Engineer";
+        let response = await fetch("http://127.0.0.1:8000/assessment", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                name: name,
+                programming: programming,
+                math: math,
+                communication: communication,
+                interest: interest,
+                experience: experience
+            })
+
+        });
+
+        let data = await response.json();
+
+        let result = document.getElementById("result");
+
+        result.style.display = "block";
+
+        result.innerHTML = `
+            <h2>🎯 ${data.recommended_career}</h2>
+
+            <p><strong>Hello ${data.student.name}!</strong></p>
+
+            <p>
+                Based on your skills and interests,
+                this career path could be suitable for you.
+            </p>
+
+            <p><strong>Your Profile:</strong></p>
+
+            <p>Programming: ${data.student.programming}</p>
+            <p>Mathematics: ${data.student.math}</p>
+            <p>Communication: ${data.student.communication}</p>
+            <p>Experience: ${data.student.experience}</p>
+        `;
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("result").innerHTML = `
+            <p>❌ Could not connect to the CareerAI backend.</p>
+        `;
+
+        document.getElementById("result").style.display = "block";
     }
-    else if (interest === "Web Development") {
-        career = "Full Stack Developer";
-    }
-    else if (interest === "Data Science") {
-        career = "Data Scientist";
-    }
-    else if (interest === "Cyber Security") {
-        career = "Cyber Security Analyst";
-    }
-    else if (interest === "Cloud Computing") {
-        career = "Cloud Engineer";
-    }
-
-    let result = document.getElementById("result");
-
-    result.style.display = "block";
-
-    result.innerHTML = `
-        <h2>🎯 ${career}</h2>
-
-        <p><strong>Hello ${name}!</strong></p>
-
-        <p>
-            Based on your selected skills and interests,
-            this career path could be suitable for you.
-        </p>
-
-        <p><strong>Your Profile:</strong></p>
-
-        <p>Programming: ${programming}</p>
-        <p>Mathematics: ${math}</p>
-        <p>Communication: ${communication}</p>
-        <p>Experience: ${experience}</p>
-    `;
 
 });
