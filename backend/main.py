@@ -1,8 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import sqlite3
+
+from ai.reccomendation import recommend_career
+
 
 app = FastAPI()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,8 +27,33 @@ class Student(BaseModel):
     experience: str
 
 
+def save_student(data, career):
+
+    connection = sqlite3.connect("careerai.db")
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO students
+        (name, programming, math, communication, interest, experience, recommended_career)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        data.name,
+        data.programming,
+        data.math,
+        data.communication,
+        data.interest,
+        data.experience,
+        career
+    ))
+
+    connection.commit()
+    connection.close()
+
+
 @app.get("/")
 def home():
+
     return {
         "message": "CareerAI Backend is running!"
     }
@@ -32,18 +62,15 @@ def home():
 @app.post("/assessment")
 def assessment(data: Student):
 
-    if data.interest == "Artificial Intelligence":
-        career = "AI/ML Engineer"
-    elif data.interest == "Web Development":
-        career = "Full Stack Developer"
-    elif data.interest == "Data Science":
-        career = "Data Scientist"
-    elif data.interest == "Cyber Security":
-        career = "Cyber Security Analyst"
-    elif data.interest == "Cloud Computing":
-        career = "Cloud Engineer"
-    else:
-        career = "Career not found"
+    career = recommend_career(
+        data.programming,
+        data.math,
+        data.communication,
+        data.interest,
+        data.experience
+    )
+
+    save_student(data, career)
 
     return {
         "message": "Assessment received successfully!",
